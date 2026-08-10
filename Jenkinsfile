@@ -16,7 +16,7 @@ pipeline {
 
         stage('Trivy FS Scan') {
             steps {
-                sh 'trivy fs --exit-code 0 --severity LOW,MEDIUM,HIGH .'
+                bat 'trivy fs --exit-code 0 --severity LOW,MEDIUM,HIGH .'
             }
         }
 
@@ -26,7 +26,7 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    sh '''
+                    bat '''
                         sonar-scanner \
                         -Dsonar.projectKey=weather_app \
                         -Dsonar.sources=. \
@@ -39,20 +39,20 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                 bat 'docker build -t $DOCKER_IMAGE .'
             }
         }
 
         stage('Trivy Docker Image Scan') {
             steps {
-                sh 'trivy image $DOCKER_IMAGE'
+                 bat 'trivy image $DOCKER_IMAGE'
             }
         }
 
         stage('Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
+                    bat '''
                         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                         docker push $DOCKER_IMAGE
                     '''
