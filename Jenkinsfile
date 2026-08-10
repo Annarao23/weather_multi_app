@@ -2,36 +2,39 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'kartikhiremath/weather_app:latest'
-        SONARQUBE_ENV = 'sonar-scanner' // must match your Jenkins SonarQube config
+        // Change 'annarao23' to your actual Docker Hub username
+        DOCKER_IMAGE = 'annarao23/weather_app:latest' 
+        
+        // Must match the Server Name in Manage Jenkins -> System -> SonarQube servers
+        SONARQUBE_ENV = 'sonar-server' 
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Kartik-Hiremath/weather_app.git', credentialsId: 'dockerhub-creds'
+                git branch: 'main', url: 'https://github.com/Annarao23/weather_multi_app.git'
             }
         }
 
         stage('Trivy FS Scan') {
             steps {
-                sh 'trivy fs --exit-code 0 --severity LOW,MEDIUM,HIGH .'
+                bat 'trivy fs --exit-code 0 --severity LOW,MEDIUM,HIGH .'
             }
         }
 
         stage('SonarQube Analysis') {
             environment {
-                SONAR_TOKEN = credentials('sonarqube-token') // must be a Jenkins credential
+                SONAR_TOKEN = credentials('sonarqube-token')
             }
             steps {
                 withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    sh '''
-                        sonar-scanner \
-                        -Dsonar.projectKey=weather_app \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=$SONAR_HOST_URL \
-                        -Dsonar.login=$SONAR_TOKEN
+                    bat '''
+                        sonar-scanner ^
+                        -Dsonar.projectKey=weather_app ^
+                        -Dsonar.sources=. ^
+                        -Dsonar.host.url=%SONAR_HOST_URL% ^
+                        -Dsonar.login=%SONAR_TOKEN%
                     '''
                 }
             }
@@ -39,22 +42,22 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                bat 'docker build -t %DOCKER_IMAGE% .'
             }
         }
 
         stage('Trivy Docker Image Scan') {
             steps {
-                sh 'trivy image $DOCKER_IMAGE'
+                bat 'trivy image %DOCKER_IMAGE%'
             }
         }
 
         stage('Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker push $DOCKER_IMAGE
+                    bat '''
+                        echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                        docker push %DOCKER_IMAGE%
                     '''
                 }
             }
