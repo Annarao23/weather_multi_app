@@ -23,19 +23,23 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+       stage('SonarQube Analysis') {
             environment {
                 SONAR_TOKEN = credentials('sonarqube-token')
             }
             steps {
-                withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    bat '''
-                        sonar-scanner ^
-                        -Dsonar.projectKey=weather_app ^
-                        -Dsonar.sources=. ^
-                        -Dsonar.host.url=%SONAR_HOST_URL% ^
-                        -Dsonar.login=%SONAR_TOKEN%
-                    '''
+                script {
+                    // Dynamically retrieve the auto-installed scanner path
+                    def scannerHome = tool 'sonar-scanner'
+                    withSonarQubeEnv("${SONARQUBE_ENV}") {
+                        bat """
+                            "${scannerHome}\\bin\\sonar-scanner.bat" ^
+                            -Dsonar.projectKey=weather_app ^
+                            -Dsonar.sources=. ^
+                            -Dsonar.host.url=%SONAR_HOST_URL% ^
+                            -Dsonar.login=%SONAR_TOKEN%
+                        """
+                    }
                 }
             }
         }
