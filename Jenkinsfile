@@ -2,11 +2,10 @@ pipeline {
     agent any
 
     environment {
-        // Change 'annarao23' to your actual Docker Hub username
-        DOCKER_IMAGE = 'annarao23/weather_app:latest' 
-        
-        // Must match the Server Name in Manage Jenkins -> System -> SonarQube servers
-        SONARQUBE_ENV = 'sonar-server' 
+        DOCKER_IMAGE = 'annarao23/weather_app:latest'
+        SONARQUBE_ENV = 'sonar-server'
+        // Adds Docker binaries directly to the execution PATH
+        PATH = "C:\\Program Files\\Docker\\Docker\\resources\\bin;${env.PATH}"
     }
 
     stages {
@@ -23,13 +22,12 @@ pipeline {
             }
         }
 
-       stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             environment {
                 SONAR_TOKEN = credentials('sonarqube-token')
             }
             steps {
                 script {
-                    // Dynamically retrieve the auto-installed scanner path
                     def scannerHome = tool 'sonar-scanner'
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
                         bat """
@@ -57,13 +55,15 @@ pipeline {
         }
 
         stage('Push Docker Image') {
-    steps {
-        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-            bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
-            bat 'docker push %DOCKER_IMAGE%'
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    bat '''
+                        echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                        docker push %DOCKER_IMAGE%
+                    '''
+                }
+            }
         }
-    }
-}
 
         stage('Deployment Notification') {
             steps {
