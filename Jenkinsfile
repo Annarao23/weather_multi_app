@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'kartikhiremath/weather_app:latest'
-        SONARQUBE_ENV = 'MySonarQube' // must match your Jenkins SonarQube config
+        SONARQUBE_ENV = 'sonar-scanner' // must match your Jenkins SonarQube config
     }
 
     stages {
