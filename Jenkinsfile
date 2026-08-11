@@ -2,9 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'annarao23/weather_app:latest'
+        DOCKER_IMAGE = 'annarao/weather_app:latest'
         SONARQUBE_ENV = 'sonar-server'
-        // Updated to your actual Docker Desktop installation directory
         PATH = "C:\\Users\\laxmi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin;${env.PATH}"
     }
 
